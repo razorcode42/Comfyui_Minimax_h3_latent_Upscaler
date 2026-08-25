@@ -517,24 +517,24 @@ class MinimaxH3LatentUpscaler3D(io.ComfyNode):
             raise ValueError("Please place model files into the latent_upscale_models directory")
 
         # Robustly extract the underlying torch.Tensor from the incoming "samples"
-src_raw = latent["samples"]
-if hasattr(src_raw, "tensors"):
-    src_tensor = src_raw.tensors
-elif isinstance(src_raw, torch.Tensor):
-    src_tensor = src_raw
-else:
-    raise TypeError(f"[MinimaxH3-3D] Unsupported samples type: {type(src_raw)}")
-
-orig_dtype = src_tensor.dtype
-was_4d = (src_tensor.dim() == 4)
-
-dev = _resolve_device(device)
-compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
-
-# convert & clone the plain tensor
-s = src_tensor.to(device=dev, dtype=compute_dtype).clone()
-if was_4d:
-    s = s.unsqueeze(2)  # (B, C, 1, H, W)
+        src_raw = latent["samples"]
+        if hasattr(src_raw, "tensors"):
+            src_tensor = src_raw.tensors
+        elif isinstance(src_raw, torch.Tensor):
+            src_tensor = src_raw
+        else:
+            raise TypeError(f"[MinimaxH3-3D] Unsupported samples type: {type(src_raw)}")
+        
+        orig_dtype = src_tensor.dtype
+        was_4d = (src_tensor.dim() == 4)
+        
+        dev = _resolve_device(device)
+        compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
+        
+        # convert & clone the plain tensor
+        s = src_tensor.to(device=dev, dtype=compute_dtype).clone()
+        if was_4d:
+            s = s.unsqueeze(2)  # (B, C, 1, H, W)
 
         dev = _resolve_device(device)
         compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
