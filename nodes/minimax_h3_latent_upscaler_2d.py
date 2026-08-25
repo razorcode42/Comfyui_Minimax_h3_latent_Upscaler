@@ -448,6 +448,10 @@ class MinimaxH3LatentUpscalerNode2D:
             raise TypeError(f"[MinimaxH3-2D] Unsupported samples type: {type(s_raw)}")
         orig_dtype = s.dtype
 
+        # Ensure 5D (B, C, T, H, W) — support 4D image latents
+        if len(s.shape) == 4:
+            s = s.unsqueeze(2)  # (B, C, 1, H, W)
+
         compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
         s = s.to(dev, compute_dtype)
 
