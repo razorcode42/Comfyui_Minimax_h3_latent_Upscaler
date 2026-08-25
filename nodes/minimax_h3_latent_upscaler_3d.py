@@ -515,7 +515,8 @@ class MinimaxH3LatentUpscaler3D(io.ComfyNode):
 
         if model_name.startswith('('):
             raise ValueError("Please place model files into the latent_upscale_models directory")
-
+        selected_mode = mode["mode"]
+                    
         # Robustly extract the underlying torch.Tensor from the incoming "samples"
         src_raw = latent["samples"]
         if hasattr(src_raw, "tensors"):
@@ -536,6 +537,10 @@ class MinimaxH3LatentUpscaler3D(io.ComfyNode):
         if was_4d:
             s = s.unsqueeze(2)  # (B, C, 1, H, W)
         
+        # shape & VAE downsample
+        b, c, t, h_in, w_in = s.shape
+        downsample = VAE_DOWNSAMPLE
+                    
         # 1. Theoretical target size in PIXEL space
         if selected_mode == UpscaleMode.SCALE_BY:
             scale_val = mode["scale"]
