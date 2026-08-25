@@ -435,11 +435,18 @@ class MinimaxH3LatentUpscalerNode2D:
         dev = torch.device(device if torch.cuda.is_available() else "cpu")
         model = load_model(model_name, dev, precision)
 
-        s = latent["samples"].clone()
+        # robustly extract a plain torch.Tensor from the incoming "samples"
+        s_raw = latent["samples"]
+        # NestedTensor-like objects often expose .tensors; prefer that if present
+        if hasattr(s_raw, "tensors"):
+            s = s_raw.tensors.clone()
+        elif hasattr(s_raw, "clone"):
+            s = s_raw.clone()
+        elif isinstance(s_raw, torch.Tensor):
+            s = s_raw.clone()
+        else:
+            raise TypeError(f"[MinimaxH3-2D] Unsupported samples type: {type(s_raw)}")
         orig_dtype = s.dtype
-        # 确保是 5D (B, C, T, H, W)
-        if len(s.shape) == 4:
-            s = s.unsqueeze(2)  # (B, C, 1, H, W)
 
         compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
         s = s.to(dev, compute_dtype)
