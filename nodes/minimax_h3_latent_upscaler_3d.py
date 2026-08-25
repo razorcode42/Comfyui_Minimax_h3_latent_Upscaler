@@ -535,17 +535,7 @@ class MinimaxH3LatentUpscaler3D(io.ComfyNode):
         s = src_tensor.to(device=dev, dtype=compute_dtype).clone()
         if was_4d:
             s = s.unsqueeze(2)  # (B, C, 1, H, W)
-
-        dev = _resolve_device(device)
-        compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
-
-        s = src.to(device=dev, dtype=compute_dtype).clone()
-        if was_4d:
-            s = s.unsqueeze(2)  # (B, C, 1, H, W)
-
-        b, c, t, h_in, w_in = s.shape
-        downsample = VAE_DOWNSAMPLE
-
+        
         # 1. Theoretical target size in PIXEL space
         if selected_mode == UpscaleMode.SCALE_BY:
             scale_val = mode["scale"]
