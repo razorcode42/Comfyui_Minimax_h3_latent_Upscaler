@@ -7,7 +7,7 @@ Minimax H3 Latent Upscaler - ComfyUI inference node (pure 3D conv version)
 - [终极整合] 放弃 In-place 原地操作，保障 FP16/FP32 下的数值精度与画质
 - [新增] 完美支持 ROCm (AMD GPU) 加速
 - 3 resize modes: scale by multiplier / target dimensions / megapixels
-- Auto-detects model architecture (channels, blocks, temporal layout)
+- Auto-detects model architecture (channels, blocks, temporal layout)            
 """
 import torch
 import torch.nn as nn
@@ -516,10 +516,25 @@ class MinimaxH3LatentUpscaler3D(io.ComfyNode):
         if model_name.startswith('('):
             raise ValueError("Please place model files into the latent_upscale_models directory")
 
-        selected_mode = mode["mode"]
-        src = latent["samples"]
-        orig_dtype = src.dtype
-        was_4d = (src.dim() == 4)
+        # Robustly extract the underlying torch.Tensor from the incoming "samples"
+src_raw = latent["samples"]
+if hasattr(src_raw, "tensors"):
+    src_tensor = src_raw.tensors
+elif isinstance(src_raw, torch.Tensor):
+    src_tensor = src_raw
+else:
+    raise TypeError(f"[MinimaxH3-3D] Unsupported samples type: {type(src_raw)}")
+
+orig_dtype = src_tensor.dtype
+was_4d = (src_tensor.dim() == 4)
+
+dev = _resolve_device(device)
+compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
+
+# convert & clone the plain tensor
+s = src_tensor.to(device=dev, dtype=compute_dtype).clone()
+if was_4d:
+    s = s.unsqueeze(2)  # (B, C, 1, H, W)
 
         dev = _resolve_device(device)
         compute_dtype = {"fp32": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}[precision]
